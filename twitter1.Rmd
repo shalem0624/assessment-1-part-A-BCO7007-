@@ -1,0 +1,139 @@
+---
+title: "Assessment-1 part-B"
+author: "shalem(s8067027)"
+date: "2023-08-20"
+output:
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Loading required libraries
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(tidytext)
+library(reshape2)
+library(wordcloud)
+```
+
+# Reading the data
+
+```{r}
+data <- read.csv("D:/AI & ML for business/datasets/twitter_data.csv")
+```
+
+#Performing sentiment analysis to create sentiment column
+
+```{r}
+data$Sentiment <- factor(rep(c("Negative", "Neutral", "Positive"), length.out = nrow(data)))
+```
+
+# Defining function to create Sentiment plot for a specific data range
+
+```{r}
+create_sentiment_plot <- function(start_date, end_date) {
+  week_tweets <- subset(data, date >= start_date & date <= end_date)
+  return(week_tweets)
+}
+```
+
+# Calling the function
+
+```{r}
+week_tweets <- create_sentiment_plot("2021-10-05", "2021-10-11")
+```
+
+# Creating sentiment plot
+
+```{r}
+sentiment_plot <- ggplot(week_tweets, aes(x = Sentiment, fill = Sentiment)) + geom_bar() + labs(title = paste("Sentiment Distribution -", "2021-10-05", "to", "2021-10-11"), x = "Sentiment", y = "Count") + theme_minimal() + scale_fill_manual(values = c("Negative" = "steelblue", "Neutral" = "gray", "Positive" = "blue"))
+```
+
+# Display of Sentiment plot
+
+```{r}
+sentiment_plot
+```
+
+# Loading sentiment Lexicon
+
+```{r}
+bing_lexicon <- get_sentiments("bing")
+```
+
+```{r}
+top_words <- data %>%
+  select(text) %>%
+  unnest_tokens(word, text) %>%
+  left_join(bing_lexicon, by = "word") %>%
+  filter(!is.na(sentiment)) %>%
+  select(sentiment, word) %>%
+  count(sentiment, word, sort = TRUE)
+```
+
+# Top positive
+```{r}
+top_positive <- top_words %>%
+  filter(sentiment == "positive") %>%
+  top_n(10)
+```
+
+#top Negative
+```{r}
+top_negative <- top_words %>%
+  filter(sentiment == "negative") %>%
+  top_n(10)
+```
+
+# Plotting top positive words
+```{r}
+ggplot(top_positive, aes(x = word, y = n, fill = word)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Top 10 Positive Words", x = "Word", y = "Count") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+# Plotting top negative words
+```{r}
+ggplot(top_negative, aes(x = word, y = n, fill = word)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Top 10 Negative Words", x = "Word", y = "Count") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+# Plotting Most common postive and negative words
+
+```{r}
+top_positive_words <- top_words %>% filter(sentiment == "positive")
+
+top_negative_words <- top_words %>% filter(sentiment == "negative")
+```
+
+```{r}
+ggplot(top_positive_words, aes(x = reorder(word, n), y = n, fill = word)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Most Common Positive Words",
+       x = "Word",
+       y = "Count") +
+  theme_minimal()
+```
+
+
+
+
+
+
+
+
+
+
+
